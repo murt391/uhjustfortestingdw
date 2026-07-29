@@ -186,6 +186,7 @@ function Library.new(titleText, defaultToggleKey)
         TabButton.Font = Enum.Font.GothamMedium
         TabButton.TextSize = 12
         TabButton.TextColor3 = Theme.TextMuted
+        TabButton.AutoButtonColor = false
         TabButton.Parent = Sidebar
         AddCorner(TabButton, 6)
 
@@ -256,6 +257,7 @@ function Library.new(titleText, defaultToggleKey)
             Btn.Font = Enum.Font.GothamMedium
             Btn.TextColor3 = Theme.Text
             Btn.TextSize = 13
+            Btn.AutoButtonColor = false
             Btn.Parent = TabFrame
             AddCorner(Btn, 6)
             AddStroke(Btn, Theme.Border)
