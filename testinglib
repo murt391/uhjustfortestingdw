@@ -196,6 +196,7 @@ function Library.new(titleText, defaultToggleKey)
         TabFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
         TabFrame.ScrollBarThickness = 3
         TabFrame.ScrollBarImageColor3 = Theme.Accent
+        TabFrame.ClipsDescendants = false
         TabFrame.Parent = ContentArea
 
         local ElementLayout = Instance.new("UIListLayout")
@@ -228,6 +229,7 @@ function Library.new(titleText, defaultToggleKey)
                 BackgroundTransparency = 0,
                 TextColor3 = Theme.Text
             }):Play()
+            UpdateCanvas()
         end
 
         TabButton.MouseButton1Click:Connect(Activate)
@@ -244,7 +246,7 @@ function Library.new(titleText, defaultToggleKey)
         -- UI ELEMENTS
         ------------------------------------------------------------------------
 
-        -- 1. BUTTON
+        -- BUTTON
         function Tab:CreateButton(text, callback)
             callback = callback or function() end
             local Btn = Instance.new("TextButton")
@@ -273,7 +275,7 @@ function Library.new(titleText, defaultToggleKey)
             end)
         end
 
-        -- 2. TOGGLE
+        -- TOGGLE
         function Tab:CreateToggle(text, defaultState, callback)
             callback = callback or function() end
             local toggled = defaultState or false
@@ -328,13 +330,13 @@ function Library.new(titleText, defaultToggleKey)
             end)
         end
 
-        -- 3. SLIDER
+        -- SLIDER (FIXED EXPLICIT ZINDEX & LAYOUT)
         function Tab:CreateSlider(text, min, max, default, callback)
             callback = callback or function() end
             local value = default or min
 
             local Container = Instance.new("Frame")
-            Container.Size = UDim2.new(1, 0, 0, 48)
+            Container.Size = UDim2.new(1, 0, 0, 50)
             Container.BackgroundColor3 = Theme.Card
             Container.Parent = TabFrame
             AddCorner(Container, 6)
@@ -345,7 +347,7 @@ function Library.new(titleText, defaultToggleKey)
             Label.Font = Enum.Font.GothamMedium
             Label.TextSize = 13
             Label.TextColor3 = Theme.Text
-            Label.Position = UDim2.new(0, 12, 0, 6)
+            Label.Position = UDim2.new(0, 12, 0, 8)
             Label.Size = UDim2.new(1, -60, 0, 18)
             Label.TextXAlignment = Enum.TextXAlignment.Left
             Label.BackgroundTransparency = 1
@@ -356,7 +358,7 @@ function Library.new(titleText, defaultToggleKey)
             ValueLabel.Font = Enum.Font.GothamMedium
             ValueLabel.TextSize = 12
             ValueLabel.TextColor3 = Theme.TextMuted
-            ValueLabel.Position = UDim2.new(1, -52, 0, 6)
+            ValueLabel.Position = UDim2.new(1, -52, 0, 8)
             ValueLabel.Size = UDim2.new(0, 40, 0, 18)
             ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
             ValueLabel.BackgroundTransparency = 1
@@ -364,7 +366,7 @@ function Library.new(titleText, defaultToggleKey)
 
             local Bar = Instance.new("Frame")
             Bar.Size = UDim2.new(1, -24, 0, 6)
-            Bar.Position = UDim2.new(0, 12, 1, -14)
+            Bar.Position = UDim2.new(0, 12, 0, 32)
             Bar.BackgroundColor3 = Theme.Sidebar
             Bar.Parent = Container
             AddCorner(Bar, 3)
@@ -375,6 +377,12 @@ function Library.new(titleText, defaultToggleKey)
             Fill.Parent = Bar
             AddCorner(Fill, 3)
 
+            local ClickArea = Instance.new("TextButton")
+            ClickArea.Size = UDim2.new(1, 0, 1, 0)
+            ClickArea.BackgroundTransparency = 1
+            ClickArea.Text = ""
+            ClickArea.Parent = Container
+
             local dragging = false
             local function Update(input)
                 local pos = math.clamp((input.Position.X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
@@ -384,7 +392,7 @@ function Library.new(titleText, defaultToggleKey)
                 callback(val)
             end
 
-            Bar.InputBegan:Connect(function(input)
+            ClickArea.InputBegan:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                     dragging = true
                     Update(input)
@@ -404,7 +412,7 @@ function Library.new(titleText, defaultToggleKey)
             end)
         end
 
-        -- 4. DROPDOWN
+        -- DROPDOWN (FIXED CLIPPING & CANVAS UPDATE)
         function Tab:CreateDropdown(text, options, callback)
             callback = callback or function() end
             local expanded = false
@@ -435,14 +443,14 @@ function Library.new(titleText, defaultToggleKey)
             DropBtn.Parent = Container
 
             local OptionsFrame = Instance.new("Frame")
-            OptionsFrame.Size = UDim2.new(1, -24, 0, #options * 26)
+            OptionsFrame.Size = UDim2.new(1, -24, 0, #options * 28)
             OptionsFrame.Position = UDim2.new(0, 12, 0, 36)
             OptionsFrame.BackgroundTransparency = 1
             OptionsFrame.Parent = Container
 
             local OptLayout = Instance.new("UIListLayout")
             OptLayout.SortOrder = Enum.SortOrder.LayoutOrder
-            OptLayout.Padding = UDim.new(0, 3)
+            OptLayout.Padding = UDim.new(0, 4)
             OptLayout.Parent = OptionsFrame
 
             for _, opt in ipairs(options) do
@@ -459,23 +467,27 @@ function Library.new(titleText, defaultToggleKey)
                 OptBtn.MouseButton1Click:Connect(function()
                     Label.Text = text .. ": " .. opt
                     expanded = false
-                    TweenService:Create(Container, TweenInfo.new(0.2), {
+                    local tween = TweenService:Create(Container, TweenInfo.new(0.2), {
                         Size = UDim2.new(1, 0, 0, 36)
-                    }):Play()
+                    })
+                    tween:Play()
+                    tween.Completed:Connect(UpdateCanvas)
                     callback(opt)
                 end)
             end
 
             DropBtn.MouseButton1Click:Connect(function()
                 expanded = not expanded
-                local targetHeight = expanded and (36 + (#options * 29)) or 36
-                TweenService:Create(Container, TweenInfo.new(0.2), {
+                local targetHeight = expanded and (40 + (#options * 28)) or 36
+                local tween = TweenService:Create(Container, TweenInfo.new(0.2), {
                     Size = UDim2.new(1, 0, 0, targetHeight)
-                }):Play()
+                })
+                tween:Play()
+                tween.Completed:Connect(UpdateCanvas)
             end)
         end
 
-        -- 5. KEYBIND SELECTOR
+        -- KEYBIND SELECTOR
         function Tab:CreateKeybind(text, defaultKey, callback)
             callback = callback or function() end
             local currentKey = defaultKey or Enum.KeyCode.P
