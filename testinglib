@@ -13,27 +13,28 @@ if PlayerGui:FindFirstChild("SleekLibraryGui") then
     PlayerGui:FindFirstChild("SleekLibraryGui"):Destroy()
 end
 
--- Master ScreenGui setup
+-- Master ScreenGui
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "SleekLibraryGui"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = PlayerGui
 
--- Modern UI Palette
+-- Refined Theme Palette
 local Theme = {
-    Background = Color3.fromRGB(18, 18, 22),
-    Sidebar = Color3.fromRGB(14, 14, 18),
-    Card = Color3.fromRGB(26, 26, 32),
-    CardHover = Color3.fromRGB(32, 32, 40),
-    Accent = Color3.fromRGB(88, 101, 242), -- Discord Accent Blue/Purple
-    Text = Color3.fromRGB(240, 240, 245),
-    TextMuted = Color3.fromRGB(120, 120, 135),
-    Border = Color3.fromRGB(38, 38, 48)
+    Background = Color3.fromRGB(15, 16, 21),
+    Sidebar = Color3.fromRGB(11, 12, 16),
+    Card = Color3.fromRGB(22, 24, 31),
+    CardHover = Color3.fromRGB(30, 33, 43),
+    Accent = Color3.fromRGB(99, 102, 241),      -- Modern Indigo
+    AccentHover = Color3.fromRGB(129, 140, 248),
+    Text = Color3.fromRGB(243, 244, 246),
+    TextMuted = Color3.fromRGB(148, 163, 184),
+    Border = Color3.fromRGB(31, 35, 48)
 }
 
 local function AddCorner(instance, radius)
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, radius or 6)
+    corner.CornerRadius = UDim.new(0, radius or 8)
     corner.Parent = instance
 end
 
@@ -49,63 +50,64 @@ end
 --------------------------------------------------------------------------------
 -- WINDOW CREATION
 --------------------------------------------------------------------------------
-function Library.new(titleText, toggleKey)
+function Library.new(titleText, defaultToggleKey)
     local Window = {}
     
-    -- Configurable Keybind (Default: KeyCode.P)
-    local ToggleKeybind = toggleKey or Enum.KeyCode.P
+    -- Configurable Keybind (Defaults to KeyCode.P if omitted)
+    Window.ToggleKeybind = defaultToggleKey or Enum.KeyCode.P
     local GuiVisible = true
 
     -- Main Container Frame
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
-    MainFrame.Size = UDim2.new(0, 520, 0, 360)
-    MainFrame.Position = UDim2.new(0.5, -260, 0.5, -180)
+    MainFrame.Size = UDim2.new(0, 540, 0, 380)
+    MainFrame.Position = UDim2.new(0.5, -270, 0.5, -190)
     MainFrame.BackgroundColor3 = Theme.Background
     MainFrame.BorderSizePixel = 0
     MainFrame.Parent = ScreenGui
     MainFrame.ClipsDescendants = true
-    AddCorner(MainFrame, 10)
+    AddCorner(MainFrame, 12)
     AddStroke(MainFrame, Theme.Border, 1)
-
-    -- Keybind Toggle Listener
-    UserInputService.InputBegan:Connect(function(input, gameProcessed)
-        if not gameProcessed and input.KeyCode == ToggleKeybind then
-            GuiVisible = not GuiVisible
-            MainFrame.Visible = GuiVisible
-        end
-    end)
 
     -- Top Header Bar
     local TopBar = Instance.new("Frame")
     TopBar.Name = "TopBar"
-    TopBar.Size = UDim2.new(1, 0, 0, 42)
+    TopBar.Size = UDim2.new(1, 0, 0, 44)
     TopBar.BackgroundColor3 = Theme.Sidebar
     TopBar.BorderSizePixel = 0
     TopBar.Parent = MainFrame
-    AddCorner(TopBar, 10)
+    AddCorner(TopBar, 12)
 
     local Title = Instance.new("TextLabel")
     Title.Text = titleText or "UI Library"
     Title.Font = Enum.Font.GothamBold
     Title.TextSize = 14
     Title.TextColor3 = Theme.Text
-    Title.Position = UDim2.new(0, 15, 0, 0)
-    Title.Size = UDim2.new(1, -30, 1, 0)
+    Title.Position = UDim2.new(0, 16, 0, 0)
+    Title.Size = UDim2.new(1, -120, 1, 0)
     Title.TextXAlignment = Enum.TextXAlignment.Left
     Title.BackgroundTransparency = 1
     Title.Parent = TopBar
 
     local KeyHint = Instance.new("TextLabel")
-    KeyHint.Text = "[" .. ToggleKeybind.Name .. " to hide]"
-    KeyHint.Font = Enum.Font.Gotham
-    KeyHint.TextSize = 11
-    KeyHint.TextColor3 = Theme.TextMuted
-    KeyHint.Position = UDim2.new(0, 0, 0, 0)
-    KeyHint.Size = UDim2.new(1, -15, 1, 0)
+    KeyHint.Name = "KeyHint"
+    KeyHint.Text = "[" .. Window.ToggleKeybind.Name .. "]"
+    KeyHint.Font = Enum.Font.GothamMedium
+    KeyHint.TextSize = 12
+    KeyHint.TextColor3 = Theme.Accent
+    KeyHint.Position = UDim2.new(1, -90, 0, 0)
+    KeyHint.Size = UDim2.new(0, 75, 1, 0)
     KeyHint.TextXAlignment = Enum.TextXAlignment.Right
     KeyHint.BackgroundTransparency = 1
     KeyHint.Parent = TopBar
+
+    -- Toggle visibility input listener
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if not gameProcessed and input.KeyCode == Window.ToggleKeybind then
+            GuiVisible = not GuiVisible
+            MainFrame.Visible = GuiVisible
+        end
+    end)
 
     -- Smooth Dragging Mechanism
     local dragging, dragInput, dragStart, startPos
@@ -131,24 +133,26 @@ function Library.new(titleText, toggleKey)
     UserInputService.InputChanged:Connect(function(input)
         if input == dragInput and dragging then
             local delta = input.Position - dragStart
-            MainFrame.Position = UDim2.new(
-                startPos.X.Scale, startPos.X.Offset + delta.X,
-                startPos.Y.Scale, startPos.Y.Offset + delta.Y
-            )
+            TweenService:Create(MainFrame, TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                Position = UDim2.new(
+                    startPos.X.Scale, startPos.X.Offset + delta.X,
+                    startPos.Y.Scale, startPos.Y.Offset + delta.Y
+                )
+            }):Play()
         end
     end)
 
-    -- Navigation Sidebar
+    -- Sidebar
     local Sidebar = Instance.new("Frame")
-    Sidebar.Size = UDim2.new(0, 130, 1, -42)
-    Sidebar.Position = UDim2.new(0, 0, 0, 42)
+    Sidebar.Size = UDim2.new(0, 140, 1, -44)
+    Sidebar.Position = UDim2.new(0, 0, 0, 44)
     Sidebar.BackgroundColor3 = Theme.Sidebar
     Sidebar.BorderSizePixel = 0
     Sidebar.Parent = MainFrame
 
     local TabListLayout = Instance.new("UIListLayout")
     TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    TabListLayout.Padding = UDim.new(0, 5)
+    TabListLayout.Padding = UDim.new(0, 6)
     TabListLayout.Parent = Sidebar
 
     local TabPadding = Instance.new("UIPadding")
@@ -157,10 +161,10 @@ function Library.new(titleText, toggleKey)
     TabPadding.PaddingRight = UDim.new(0, 10)
     TabPadding.Parent = Sidebar
 
-    -- Main Content Display Area
+    -- Content Display Area
     local ContentArea = Instance.new("Frame")
-    ContentArea.Size = UDim2.new(1, -130, 1, -42)
-    ContentArea.Position = UDim2.new(0, 130, 0, 42)
+    ContentArea.Size = UDim2.new(1, -140, 1, -44)
+    ContentArea.Position = UDim2.new(0, 140, 0, 44)
     ContentArea.BackgroundTransparency = 1
     ContentArea.Parent = MainFrame
 
@@ -175,7 +179,7 @@ function Library.new(titleText, toggleKey)
         local Tab = {}
 
         local TabButton = Instance.new("TextButton")
-        TabButton.Size = UDim2.new(1, 0, 0, 32)
+        TabButton.Size = UDim2.new(1, 0, 0, 34)
         TabButton.BackgroundColor3 = Theme.Card
         TabButton.BackgroundTransparency = 1
         TabButton.Text = name
@@ -190,7 +194,7 @@ function Library.new(titleText, toggleKey)
         TabFrame.BackgroundTransparency = 1
         TabFrame.Visible = false
         TabFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-        TabFrame.ScrollBarThickness = 2
+        TabFrame.ScrollBarThickness = 3
         TabFrame.ScrollBarImageColor3 = Theme.Accent
         TabFrame.Parent = ContentArea
 
@@ -323,13 +327,13 @@ function Library.new(titleText, toggleKey)
             end)
         end
 
-        -- SLIDER
-        function Tab:CreateSlider(text, min, max, default, callback)
+        -- KEYBIND SETTING
+        function Tab:CreateKeybind(text, defaultKey, callback)
             callback = callback or function() end
-            local value = default or min
+            local currentKey = defaultKey or Enum.KeyCode.P
 
             local Container = Instance.new("Frame")
-            Container.Size = UDim2.new(1, 0, 0, 48)
+            Container.Size = UDim2.new(1, 0, 0, 36)
             Container.BackgroundColor3 = Theme.Card
             Container.Parent = TabFrame
             AddCorner(Container, 6)
@@ -340,133 +344,42 @@ function Library.new(titleText, toggleKey)
             Label.Font = Enum.Font.GothamMedium
             Label.TextSize = 13
             Label.TextColor3 = Theme.Text
-            Label.Position = UDim2.new(0, 12, 0, 6)
-            Label.Size = UDim2.new(1, -60, 0, 18)
-            Label.TextXAlignment = Enum.TextXAlignment.Left
-            Label.BackgroundTransparency = 1
-            Label.Parent = Container
-
-            local ValueLabel = Instance.new("TextLabel")
-            ValueLabel.Text = tostring(value)
-            ValueLabel.Font = Enum.Font.GothamMedium
-            ValueLabel.TextSize = 12
-            ValueLabel.TextColor3 = Theme.TextMuted
-            ValueLabel.Position = UDim2.new(1, -52, 0, 6)
-            ValueLabel.Size = UDim2.new(0, 40, 0, 18)
-            ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
-            ValueLabel.BackgroundTransparency = 1
-            ValueLabel.Parent = Container
-
-            local Bar = Instance.new("Frame")
-            Bar.Size = UDim2.new(1, -24, 0, 6)
-            Bar.Position = UDim2.new(0, 12, 1, -14)
-            Bar.BackgroundColor3 = Theme.Sidebar
-            Bar.Parent = Container
-            AddCorner(Bar, 3)
-
-            local Fill = Instance.new("Frame")
-            Fill.Size = UDim2.new((value - min) / (max - min), 0, 1, 0)
-            Fill.BackgroundColor3 = Theme.Accent
-            Fill.Parent = Bar
-            AddCorner(Fill, 3)
-
-            local dragging = false
-            local function Update(input)
-                local pos = math.clamp((input.Position.X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
-                local val = math.floor(min + (max - min) * pos)
-                ValueLabel.Text = tostring(val)
-                Fill.Size = UDim2.new(pos, 0, 1, 0)
-                callback(val)
-            end
-
-            Bar.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                    dragging = true
-                    Update(input)
-                end
-            end)
-
-            UserInputService.InputEnded:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                    dragging = false
-                end
-            end)
-
-            UserInputService.InputChanged:Connect(function(input)
-                if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                    Update(input)
-                end
-            end)
-        end
-
-        -- DROPDOWN
-        function Tab:CreateDropdown(text, options, callback)
-            callback = callback or function() end
-            local expanded = false
-
-            local Container = Instance.new("Frame")
-            Container.Size = UDim2.new(1, 0, 0, 36)
-            Container.BackgroundColor3 = Theme.Card
-            Container.ClipsDescendants = true
-            Container.Parent = TabFrame
-            AddCorner(Container, 6)
-            AddStroke(Container, Theme.Border)
-
-            local Label = Instance.new("TextLabel")
-            Label.Text = text .. ": " .. (options[1] or "")
-            Label.Font = Enum.Font.GothamMedium
-            Label.TextSize = 13
-            Label.TextColor3 = Theme.Text
             Label.Position = UDim2.new(0, 12, 0, 0)
-            Label.Size = UDim2.new(1, -24, 0, 36)
+            Label.Size = UDim2.new(1, -90, 1, 0)
             Label.TextXAlignment = Enum.TextXAlignment.Left
             Label.BackgroundTransparency = 1
             Label.Parent = Container
 
-            local DropBtn = Instance.new("TextButton")
-            DropBtn.Size = UDim2.new(1, 0, 0, 36)
-            DropBtn.BackgroundTransparency = 1
-            DropBtn.Text = ""
-            DropBtn.Parent = Container
+            local BindBtn = Instance.new("TextButton")
+            BindBtn.Size = UDim2.new(0, 70, 0, 24)
+            BindBtn.Position = UDim2.new(1, -78, 0.5, -12)
+            BindBtn.BackgroundColor3 = Theme.Sidebar
+            BindBtn.Text = currentKey.Name
+            BindBtn.Font = Enum.Font.GothamBold
+            BindBtn.TextSize = 11
+            BindBtn.TextColor3 = Theme.Accent
+            BindBtn.Parent = Container
+            AddCorner(BindBtn, 4)
+            AddStroke(BindBtn, Theme.Border)
 
-            local OptionsFrame = Instance.new("Frame")
-            OptionsFrame.Size = UDim2.new(1, -24, 0, #options * 26)
-            OptionsFrame.Position = UDim2.new(0, 12, 0, 36)
-            OptionsFrame.BackgroundTransparency = 1
-            OptionsFrame.Parent = Container
+            local binding = false
 
-            local OptLayout = Instance.new("UIListLayout")
-            OptLayout.SortOrder = Enum.SortOrder.LayoutOrder
-            OptLayout.Padding = UDim.new(0, 3)
-            OptLayout.Parent = OptionsFrame
-
-            for _, opt in ipairs(options) do
-                local OptBtn = Instance.new("TextButton")
-                OptBtn.Size = UDim2.new(1, 0, 0, 24)
-                OptBtn.BackgroundColor3 = Theme.Sidebar
-                OptBtn.Text = opt
-                OptBtn.Font = Enum.Font.Gotham
-                OptBtn.TextSize = 12
-                OptBtn.TextColor3 = Theme.TextMuted
-                OptBtn.Parent = OptionsFrame
-                AddCorner(OptBtn, 4)
-
-                OptBtn.MouseButton1Click:Connect(function()
-                    Label.Text = text .. ": " .. opt
-                    expanded = false
-                    TweenService:Create(Container, TweenInfo.new(0.2), {
-                        Size = UDim2.new(1, 0, 0, 36)
-                    }):Play()
-                    callback(opt)
+            BindBtn.MouseButton1Click:Connect(function()
+                binding = true
+                BindBtn.Text = "..."
+                
+                local connection
+                connection = UserInputService.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.Keyboard then
+                        currentKey = input.KeyCode
+                        Window.ToggleKeybind = currentKey
+                        KeyHint.Text = "[" .. currentKey.Name .. "]"
+                        BindBtn.Text = currentKey.Name
+                        binding = false
+                        connection:Disconnect()
+                        callback(currentKey)
+                    end
                 end)
-            end
-
-            DropBtn.MouseButton1Click:Connect(function()
-                expanded = not expanded
-                local targetHeight = expanded and (36 + (#options * 29)) or 36
-                TweenService:Create(Container, TweenInfo.new(0.2), {
-                    Size = UDim2.new(1, 0, 0, targetHeight)
-                }):Play()
             end)
         end
 
