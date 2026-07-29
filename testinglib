@@ -442,6 +442,7 @@ function Library.new(titleText, defaultToggleKey)
             DropBtn.Size = UDim2.new(1, 0, 0, 36)
             DropBtn.BackgroundTransparency = 1
             DropBtn.Text = ""
+            DropBtn.AutoButtonColor = false
             DropBtn.Parent = Container
 
             local OptionsFrame = Instance.new("Frame")
@@ -463,6 +464,7 @@ function Library.new(titleText, defaultToggleKey)
                 OptBtn.Font = Enum.Font.Gotham
                 OptBtn.TextSize = 12
                 OptBtn.TextColor3 = Theme.TextMuted
+                OptBtn.AutoButtonColor = false
                 OptBtn.Parent = OptionsFrame
                 AddCorner(OptBtn, 4)
 
@@ -520,6 +522,7 @@ function Library.new(titleText, defaultToggleKey)
             BindBtn.Font = Enum.Font.GothamBold
             BindBtn.TextSize = 11
             BindBtn.TextColor3 = Theme.Accent
+            BindBtn.AutoButtonColor = false
             BindBtn.Parent = Container
             AddCorner(BindBtn, 4)
             AddStroke(BindBtn, Theme.Border)
